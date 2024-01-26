@@ -1,41 +1,49 @@
-import Counter from "./components/Counter";
-import logo from "./assets/logo.svg";
-
-import "./App.css";
+import { useState } from "react";
 
 function App() {
+  const [image, setImage] = useState(null); // Initialisez le state à null pour indiquer l'absence d'image sélectionnée
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (image) {
+      // Vérifiez si une image a été sélectionnée
+      const formData = new FormData();
+      formData.append("image", image); // Utilisez le même clé 'image' que celle attendue par le back-end
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/upload`,
+          {
+            method: "POST",
+            body: formData, // Pas besoin d'en-tête 'Content-Type', il est défini automatiquement par le navigateur, autrement il faut gérer des Boundary
+          }
+        );
+
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+
+        const result = await response.json();
+        console.info("Upload success", result);
+      } catch (err) {
+        console.error("Upload error", err);
+      }
+    } else {
+      console.info("No image selected");
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React !</p>
-
-        <Counter />
-
-        <p>
-          Edit <code>App.jsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {" | "}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <label htmlFor="image">Upload image</label>
+      <input
+        id="image"
+        onChange={(e) => setImage(e.target.files[0])}
+        type="file"
+        accept="image/*"
+      />
+      <button type="submit">Upload</button>
+    </form>
   );
 }
 
